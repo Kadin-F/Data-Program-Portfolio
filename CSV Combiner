@@ -1,0 +1,198 @@
+import pandas as pd
+import tkinter as tk
+from tkinter.filedialog import askopenfilenames, asksaveasfilename
+
+Files_dict = {}
+Fctn_dict = {}
+Filecount = 1
+Out_df = pd.DataFrame()
+displaytext_str = 'Files to combine:'
+StartingText_str = 'Welcome! To start click "Choose Files" and select the' \
+                   ' .csv files you wish to combine. It is possible to' \
+                   ' combine files with different column names and numbers ' \
+                   'but this may make the format of the output file ' \
+                   'unexpected. The files will be combined in the order they ' \
+                   'are displayed in the file choose window, please keep this' \
+                   ' in mind.\n\nif there is a specific order desired for the' \
+                   ' output file, you can select the "Choose Files" button ' \
+                   'multiple times. Using this method, the files will be ' \
+                   'ordered in the order they are selected\n\n' \
+                   'This program only accepts .csv files and only exports' \
+                   ' .csv files.'
+
+
+def choose_press():
+    # noinspection PyGlobalUndefined
+    global Files_dict
+    global Filecount
+    global displaytext_str
+    filepath = askopenfilenames(
+        filetypes=[("CSV Files", "*.csv")]
+    )
+    for i in filepath:
+        i_dict = {f'{Filecount}': i}
+        if list(i_dict.values())[0] in list(Files_dict.values()):
+            txt_display['text'] = f'The file at:\n{filepath}\nhas already ' \
+                                  f'been chosen. This program does not ' \
+                                  f'combine duplicate .csv files....yet'
+            return
+        if not filepath:
+            txt_display['text'] = 'File choose cancelled.'
+            return
+        try:
+            Files_dict.update(i_dict)
+            Filecount += 1
+        except FileNotFoundError:
+            txt_display['text'] = 'Filepath is not defined.'
+            return
+        displaytext_str = f"{displaytext_str}\n{i}"
+    txt_display['text'] = displaytext_str
+
+
+def run_press():
+    global Out_df
+    global Fctn_dict
+    global Files_dict
+    Fctn_dict = Files_dict.copy()
+    for k, v in Files_dict.items():
+        if k == '1':
+            i_df = pd.read_csv(v)
+            Out_df = pd.concat([Out_df, i_df])
+            Fctn_dict.pop(k)
+        else:
+            i_df = pd.read_csv(v)
+            try:
+                if (Out_df.columns == i_df.columns).all():
+                    Out_df = pd.concat([Out_df, i_df])
+                    Fctn_dict.pop(k)
+                else:
+                    txt_display['text'] = f'The columns of {v} do not match ' \
+                                          f'the columns of {Files_dict["1"]}.' \
+                                          f'\nThis may cause the output csv ' \
+                                          f'to be in an unexpected format.' \
+                                          f'\nDo you wish to proceed or would' \
+                                          f' you like to choose new files?'
+                    btn_continue.grid(sticky='ew', row=1, column=0, padx=5,
+                                      pady=5)
+                    btn_rechoose.grid(sticky='ew', row=1, column=1, padx=5,
+                                      pady=5)
+                    return
+            except ValueError:
+                txt_display['text'] = f'The columns of {v} do not match the' \
+                                      f' columns of {Files_dict["1"]}.' \
+                                      f'\nThis may cause the output csv to be' \
+                                      f' in an unexpected format.\nDo you' \
+                                      f' wish to proceed or would you like ' \
+                                      f'to choose new files?'
+                btn_continue.grid(sticky='ew', row=1, column=0, padx=5, pady=5)
+                btn_rechoose.grid(sticky='ew', row=1, column=1, padx=5, pady=5)
+                return
+    btn_flchoose['text'] = 'Add More\nFiles'
+    txt_display['text'] = 'All files combined. Save file.'
+    btn_save.grid(row=2, column=0, sticky='ew', padx=5, pady=5)
+    btn_new.grid(row=3, column=0, sticky='ew', padx=5, pady=5)
+
+
+def continue_press():
+    btn_continue.grid_forget()
+    btn_rechoose.grid_forget()
+    global Out_df
+    global Fctn_dict
+    Continue_dict = Fctn_dict.copy()
+    for k, v in Continue_dict.items():
+        if k == '1':
+            i_df = pd.read_csv(v)
+            Out_df = pd.concat([Out_df, i_df])
+            Fctn_dict.pop(k)
+        else:
+            i_df = pd.read_csv(v)
+        Out_df = pd.concat([Out_df, i_df])
+        Fctn_dict.pop(k)
+    btn_flchoose['text'] = 'Add More\nFiles'
+    txt_display['text'] = 'All files combined. Save file.'
+    btn_save.grid(row=2, column=0, sticky='ew', padx=5, pady=5)
+    btn_new.grid(row=3, column=0, sticky='ew', padx=5, pady=5)
+
+
+def rechoose_press():
+    btn_continue.grid_forget()
+    btn_rechoose.grid_forget()
+    global Files_dict
+    global Fctn_dict
+    global Filecount
+    global Out_df
+    global displaytext_str
+    displaytext_str = 'Files to combine:'
+    Files_dict = {}
+    Fctn_dict = {}
+    Out_df = pd.DataFrame()
+    txt_display['text'] = 'File library cleared. Choose new Files.'
+    Filecount = 1
+
+
+def save_press():
+    savepath = asksaveasfilename(
+        defaultextension=".csv",
+        filetypes=[("CSV Files", "*.csv")],
+    )
+    if not savepath:
+        txt_display['text'] = 'Save cancelled.'
+        return
+    Out_df.to_csv(savepath, index=False)
+    txt_display['text'] = f'Saved to {savepath}.'
+
+
+def new_press():
+    txt_display['text'] = 'File cache cleared.'
+    global Filecount
+    global Files_dict
+    global Fctn_dict
+    global Out_df
+    global displaytext_str
+    btn_flchoose['text'] = 'Choose Files'
+    Files_dict = {}
+    Fctn_dict = {}
+    Filecount = 1
+    Out_df = pd.DataFrame()
+    displaytext_str = 'Files to combine:'
+    btn_save.grid_forget()
+    btn_new.grid_forget()
+
+
+Window = tk.Tk()
+Window.rowconfigure(0, minsize=200, weight=1)
+Window.columnconfigure(1, minsize=500, weight=1)
+Window.title('CSV-inator')
+Window.wm_minsize(650, 200)
+Window.wm_geometry("650x200")
+
+frm_display = tk.Frame(master=Window, relief='raised')
+frm_display.columnconfigure(0, minsize=250, weight=1)
+frm_display.columnconfigure(1, minsize=250, weight=1)
+frm_button = tk.Frame(master=Window, relief='raised', bd=2)
+
+btn_flchoose = tk.Button(frm_button, text='Choose File',
+                         command=choose_press)
+btn_run = tk.Button(frm_button, text='Run', command=run_press)
+btn_save = tk.Button(frm_button, text='Save Output',
+                     command=save_press)
+btn_new = tk.Button(frm_button, text='Choose New Files', command=new_press)
+txt_display = tk.Label(frm_display, text=StartingText_str,
+                       anchor='center')
+txt_display.bind('<Configure>', lambda e: txt_display.config(
+    wraplength=(txt_display.winfo_width() - 25)))
+btn_continue = tk.Button(frm_display, text='Continue', command=continue_press)
+btn_rechoose = tk.Button(frm_display, text='Clear and Choose New Files',
+                         command=rechoose_press)
+
+btn_flchoose.grid(row=0, column=0, sticky='ew', padx=5, pady=5)
+btn_run.grid(row=1, column=0, sticky='ew', padx=5, pady=5)
+# btn_save.grid(row=7, column=0, sticky='ew', padx=5, pady=5)
+txt_display.grid(sticky='ew', row=0, columnspan=2, padx=5, pady=5)
+# btn_continue.grid(sticky='ew', row=1, column=0, padx=5, pady=5)
+# btn_rechoose.grid(sticky='ew', row=1, column=1, padx=5, pady=5)
+
+frm_button.grid(row=0, column=0, sticky="ns")
+frm_display.grid(row=0, column=1, sticky="nsew")
+
+Window.mainloop()

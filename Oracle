@@ -1,0 +1,202 @@
+import os
+
+import pandas as pd
+from datetime import date
+import time
+
+#          Parameters
+# Raw data file
+print('What is the raw data filepath?\nMust be .csv. Must be the full filepath:'
+      )
+file = input()
+file = file[1:-1]
+
+# What are you naming the export
+print('What are you naming the export?:')
+fname = input()
+
+# Import and clean the file
+while True:
+    try:
+        Raw_df = pd.read_csv(file, dtype=str)
+        break
+    except FileNotFoundError:
+        print("File not found.\n\nWhat is the raw data filepath?\nMust be .csv. "
+              "Must be the full filepath:")
+        file = input()
+        file = file[1:-1]
+
+Raw2_df = Raw_df.filter(items=['Name', 'Lineitem quantity', 'Lineitem name',
+                               'Lineitem sku', 'Shipping Country',
+                               'Lineitem fulfillment status']).copy()
+Raw2_df['Lineitem quantity'] = pd.to_numeric(Raw2_df['Lineitem quantity'])
+
+# Create country reference DataFrame
+CtryRaw_df = Raw2_df.drop_duplicates(subset=['Name'])
+Ctry_df = CtryRaw_df.filter(items=['Name', 'Shipping Country'])
+Ctry_df = Ctry_df.fillna(value={'Shipping Country': 'None'})
+Ctry_df.loc[Ctry_df['Shipping Country'] != 'US',
+            'Shipping Country'] = 'International'
+Ctry_df['Shipping Country'] = Ctry_df['Shipping Country'].replace(
+    'US', 'Domestic')
+
+# Remove Digital Items
+Raw3_df = Raw2_df[~Raw2_df['Lineitem sku'].isna()]
+Raw3_df = Raw3_df.loc[Raw3_df['Lineitem fulfillment status'] != 'fulfilled']
+Raw3_df = Raw3_df[~Raw3_df['Lineitem name'].isin(
+    ['Donation to Partners In Health - Round up',
+     'Donation to Partners In Health Sierra Leone - Round up',
+     'Donation to Partners In Health - $1.00 donation',
+     'Round Up for Sierra Leone Fund within Partners in Health',
+     'Donation to Partners In Health Sierra Leone - $1.00 donation',
+     'Shipping Fee', 'Shipping fee', 'shipping fee'])].copy()
+
+Raw3_df = Raw3_df[
+    ~(Raw3_df['Lineitem name'].str.contains("digital", case=False) &
+      ~Raw3_df['Lineitem name'].str.contains("Coin and Digital", case=False))
+]
+
+Raw3_df = Raw3_df[~Raw3_df['Lineitem name'].str.contains(
+        "Life's Library", case=False)]
+
+Raw3_df = Raw3_df[
+    ~Raw3_df['Lineitem name'].str.contains("VOD", case=False)]
+
+# For each order number; count multiples across line items
+# and create "Item number" column
+NoDupes_df = Raw3_df.groupby(['Name', 'Lineitem name'])[
+    'Lineitem quantity'].sum().reset_index()
+NoDupes_df['Item number'] = NoDupes_df.groupby('Name').cumcount()
+ItemCount_df = NoDupes_df.groupby('Name')[
+    'Lineitem quantity'].sum().reset_index()
+
+# # Join Quantity to line item
+NoDupes_df['Items'] = NoDupes_df['Lineitem quantity'].astype(str) + ' X ' + \
+                      NoDupes_df['Lineitem name']
+
+# Convert from long to wide
+Wide_df = NoDupes_df.pivot(index='Name', columns='Item number', values='Items')
+
+# Join all items into one cell
+WideCtry_df = Wide_df.apply(lambda row: ' & '.join(row.dropna().astype(str)),
+                            axis=1).reset_index()
+
+# Add Country and Item count to the data frame
+WideCtry_df = pd.merge(WideCtry_df, Ctry_df, on='Name')
+WideCtry_df = pd.merge(WideCtry_df, ItemCount_df, on='Name')
+
+# Rename Columns
+WideCtry_df.rename(columns={'Name': 'Order Number',
+                            0: 'Items',
+                            'Lineitem quantity': 'Item Count'}, inplace=True)
+
+# Create all frequency table
+FreqAll_se = WideCtry_df[['Items', 'Item Count']].value_counts()
+FreqAll_df = FreqAll_se.to_frame()
+FreqAll_df.reset_index(inplace=True)
+FreqAll_df = FreqAll_df.rename(columns={'Items': 'Items',
+                                        'Item Count': 'Total Items',
+                                        FreqAll_df.columns[2]: 'Count'})
+
+FreqAllNum_df = pd.DataFrame()
+for i in FreqAll_df['Items'].unique():
+    iFreq = WideCtry_df[WideCtry_df['Items'] == i]
+    iFreqON = ', '.join(iFreq['Order Number'])
+    iON_dict = {'Items': i, 'Order Numbers': iFreqON}
+    iON_df = pd.DataFrame(iON_dict, index=[0])
+    FreqAllNum_df = pd.concat([FreqAllNum_df, iON_df])
+
+FreqAllON_df = pd.merge(FreqAll_df, FreqAllNum_df, on='Items')
+
+#                   Create Country frequency table
+
+FreqCtry_df = WideCtry_df[['Items', 'Shipping Country',
+                           'Item Count']].value_counts().to_frame()
+FreqCtry_df.reset_index(inplace=True)
+FreqCtry_df = FreqCtry_df.rename(columns={'Item Count': 'Total Items',
+                                          FreqCtry_df.columns[3]: 'Count'})
+
+# Domestic
+FreqDCtry_df = FreqCtry_df[FreqCtry_df['Shipping Country'] == 'Domestic']
+FreqDomNum_df = pd.DataFrame()
+for i in FreqDCtry_df['Items']:
+    iFreqDCtry_df = WideCtry_df.loc[(WideCtry_df['Items'] == i) &
+                                    (WideCtry_df['Shipping Country'] ==
+                                     'Domestic')].copy()
+    iFreqDOn = ', '.join(iFreqDCtry_df['Order Number'])
+    iDON_dict = {'Items': i, 'Order Numbers': iFreqDOn}
+    iDON_df = pd.DataFrame(iDON_dict, index=[0])
+    FreqDomNum_df = pd.concat([FreqDomNum_df, iDON_df])
+
+if len(FreqDomNum_df) > 0:
+    FreqDom_df = pd.merge(FreqDCtry_df, FreqDomNum_df, on='Items')
+else:
+    FreqDom_df = pd.DataFrame()
+
+# International
+FreqICtry_df = FreqCtry_df[FreqCtry_df['Shipping Country'] == 'International']
+FreqIntNum_df = pd.DataFrame()
+for i in FreqICtry_df['Items']:
+    iFreqICtry_df = WideCtry_df.loc[(WideCtry_df['Items'] == i) &
+                                    (WideCtry_df['Shipping Country'] ==
+                                     'International')].copy()
+    iFreqIOn = ', '.join(iFreqICtry_df['Order Number'])
+    iION_dict = {'Items': i, 'Order Numbers': iFreqIOn}
+    iION_df = pd.DataFrame(iION_dict, index=[0])
+    FreqIntNum_df = pd.concat([FreqIntNum_df, iION_df])
+
+if len(FreqIntNum_df) > 0:
+    FreqInt_df = pd.merge(FreqICtry_df, FreqIntNum_df, on='Items')
+else:
+    FreqInt_df = pd.DataFrame()
+
+FreqCtryON_df = pd.concat([FreqDom_df, FreqInt_df])
+FreqCtryON_df = FreqCtryON_df.rename(columns={FreqCtryON_df.columns[3]: 'Count'}
+                                     )
+FreqCtryON_df = FreqCtryON_df.sort_values(by=['Count'], ascending=False)
+
+print('What should this be saved in?\nInclude full folderpath:')
+folder = input()
+folder = folder[1:-1]
+os.makedirs("{}\\Oracle".format(folder))
+os.makedirs("{}\\Oracle\\With Order Numbers".format(folder))
+os.makedirs("{}\\Oracle\\Country\\With Order Numbers".format(folder))
+while True:
+    try:
+        FreqAll_df.to_csv(
+            '{}\\Oracle\\{}_{}_Export.csv'.format(folder, date.today(), fname),
+            index=False)
+        break
+    except OSError:
+        print("Folder not found.\n\nWhat should this be saved in?\n"
+              "Include full folderpath:")
+        folder = input()
+        folder = folder[1:-1]
+
+FreqAllON_df.to_csv(
+    '{}\\Oracle\\With Order Numbers\\{}_{}_Numbers_Export.csv'.format(
+        folder, date.today(), fname), index=False)
+
+FreqCtry_df.to_csv(
+    '{}\\Oracle\\Country\\{}_{}_Country_Export.csv'.format(
+        folder, date.today(), fname), index=False)
+
+FreqCtryON_df.to_csv(
+    '{}\\Oracle\\Country\\With Order Numbers\\{}_{}_Country_NUmbers_Export.csv'.format(
+        folder, date.today(), fname), index=False
+)
+print('Script Done. Dataframes are FreqAll_df, FreqAllOn_df, FreqCtry_df, FreqCtry_df')
+print('This program will close in 20 seconds')
+time.sleep(10)
+print('10 seconds')
+time.sleep(5)
+print('5')
+time.sleep(1)
+print('4')
+time.sleep(1)
+print('3')
+time.sleep(1)
+print('2')
+time.sleep(1)
+print('1')
+time.sleep(1)

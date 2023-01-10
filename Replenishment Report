@@ -1,0 +1,314 @@
+import datetime
+import os
+import smtplib
+import ssl
+import time
+import sys
+import warnings
+
+import pandas as pd
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+warnings.filterwarnings('ignore')
+
+DRawPath_txt = os.path.expanduser("~") + "\\Downloads"
+DPath_txt = DRawPath_txt + "\\Temp_Replenishment"
+os.makedirs(DPath_txt, exist_ok=True)
+
+message = '''Subject: Replenishment Report {}
+
+The following SKUs need replenishment:
+{}'''
+
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.dirname(__file__)
+    return os.path.join(base_path, relative_path)
+
+
+def latest_download_file(path):
+    os.chdir(path)
+    files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime)
+    files2 = []
+    for x in files:
+        if 'needs_replenishment_table' in x:
+            files2.append(x)
+    newest = files2[-1]
+    return newest
+
+
+def email_func():
+    global SKU_lst
+    global hour
+    global port
+    global context
+    global server
+    global y
+    Raw_df = pd.read_csv(latest_download_file(DPath_txt))
+
+    SKU_lst = Raw_df['SKU'].to_list()
+    hour = datetime.datetime.now().strftime("%I:%M %p")
+
+    port = 465  # For SSL
+
+    # Create a secure SSL context
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
+        server.login(<email>, <password>)
+        for y in receiveremails_lst:
+            server.sendmail(<email>", y,
+                            message.format(hour, ',\n'.join(SKU_lst))
+                            )
+    time.sleep(1)
+    os.remove(latest_download_file(DPath_txt))
+
+
+def driver_func():
+    global Noise
+    DCount_int = len(os.listdir(DPath_txt))
+    print("Running Report")
+    driver.refresh()
+    Export = driver.find_element(
+        By.CSS_SELECTOR,
+        "#your_products_wrapper > div.datatable-header > div:nth-"
+        "child(3) > div > a:nth-child(1)")
+    Noise = driver.find_element(By.CSS_SELECTOR, "#your_products_processing")
+    WebDriverWait(driver, 20).until(EC.invisibility_of_element_located(Noise))
+    time.sleep(.5)
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(Export)).click()
+
+    DSecs_float = float(0)
+
+    while True:
+        if len(os.listdir(DPath_txt)) == DCount_int:
+            DSecs_float += .5
+            time.sleep(.5)
+            if DSecs_float % 10 == 0:
+                print(".")
+        else:
+            if ".crdownload" in latest_download_file(DPath_txt):
+                DSecs_float += .5
+                time.sleep(.5)
+            else:
+
+                break
+
+
+email_loop = True
+receiveremails_lst = []
+while email_loop:
+    receiveremail_str = input(
+        '\nWhat emails should we send this report to?\nOnly input 1 email:\n')
+    while True:
+        correct_yesno = input(
+            f'\nIs this email correct {receiveremail_str}'
+            f'?\n type "Yes" or "No"\n')
+        if correct_yesno == "Yes":
+            receiveremails_lst.append(receiveremail_str)
+            correct = True
+            break
+        elif correct_yesno == "No":
+            correct = False
+            break
+        else:
+            print(f"\nYou typed {correct_yesno}")
+            pass
+    if correct:
+        while True:
+            more_yesno = input(
+                '\nWould you like to add another email?\n type "Yes" or "No"\n')
+            if more_yesno == "Yes":
+                correct = False
+                break
+            elif more_yesno == "No":
+                email_loop = False
+                correct = False
+                break
+            else:
+                print(f"\nYou typed {more_yesno}")
+                pass
+
+SHemail_str = input("\nWhat is the Shiphero Username?\n")
+while True:
+    if SHemail_str == "":
+        print("Username cannot be empty")
+        SHemail_str = input("What is the Shiphero Username?\n")
+    else:
+        break
+SHpass_str = input("What is the ShipHero Password?\n")
+while True:
+    if SHpass_str == "":
+        print("Password cannot be empty")
+        SHpass_str = input("What is the Shiphero Password?\n")
+    else:
+        break
+minutes_loop = True
+
+while minutes_loop:
+    while True:
+        try:
+            minutes_float = float(input(
+                "\nHow frequently should we check for replenishments"
+                "(in minutes)?\n"))
+            end_count = round(480 / minutes_float)
+            break
+        except ValueError:
+            print('\nPlease type a number (ex "1" not "One").\n')
+    while True:
+        minutes_yesno = input(
+            f'\nYou want to check for replacements every {minutes_float} '
+            f'minutes.\n'
+            f'This program runs for 8 hours, so you will receive {end_count} '
+            f'reports.\nIs this correct, type "Yes" or "No"\n')
+        if minutes_yesno == "Yes":
+            minutes_loop = False
+            print(f"Okay you will recieve {end_count} reports, one every"
+                  f" {minutes_float} minutes")
+            break
+        elif minutes_yesno == "No":
+            break
+        else:
+            print(f"\nYou typed {minutes_yesno}")
+            pass
+
+driverpath = resource_path("./driver/chromedriver.exe")
+# driverpath = "./driver/chromedriver.exe"
+page = "https://app.shiphero.com/reports/needs-replenishment"
+options = Options()
+options.add_argument('--headless=chrome')
+options.add_argument("--log-level=3")
+prefs = {"download.default_directory": DPath_txt}
+options.add_experimental_option("prefs", prefs)
+
+driver = webdriver.Chrome(driverpath, options=options)
+print("\nTesting login credentials")
+# Open the browser
+driver.get(page)
+# Find the username log in box and input data
+while True:
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable(
+        (By.ID, "1-email"))).send_keys(SHemail_str)
+
+    # Find the password log in box
+    pass_box = driver.find_element(By.NAME, "password")
+
+    # Input password
+    pass_box.send_keys(SHpass_str)
+
+    # Click login
+    login_button = driver.find_element(By.NAME, "submit")
+
+    # Click login
+    login_button.click()
+    try:
+        WebDriverWait(driver, 5).until(EC.url_matches(
+            'https://app.shiphero.com/reports/needs-replenishment'))
+        break
+
+    except TimeoutException:
+        exception = False
+        try:
+            password_error = driver.find_element(
+                By.XPATH, '//*[@id="auth0-lock-container-1"]/div/div[2]/'
+                          'form/div/div/div/div/div[2]/div[1]/div/div')
+            exception = True
+        except NoSuchElementException:
+            pass
+        try:
+            email_error = driver.find_element(
+                By.XPATH, '//*[@id="auth0-lock-error-msg-email"]/div')
+            exception = True
+        except NoSuchElementException:
+            pass
+        if exception:
+            print("Invalid login credentials.")
+            driver.find_element(By.ID, "1-email").send_keys(
+                Keys.CONTROL + "a")
+            driver.find_element(By.ID, "1-email").send_keys(Keys.DELETE)
+            pass_box.send_keys(Keys.CONTROL + "a")
+            pass_box.send_keys(Keys.DELETE)
+            SHemail_str = input("What is the Shiphero Username?\n")
+            while True:
+                if SHemail_str == "":
+                    print("Username cannot be empty")
+                    SHemail_str = input("What is the Shiphero Username?\n")
+                else:
+                    break
+            SHpass_str = input("What is the ShipHero Password?\n")
+            while True:
+                if SHpass_str == "":
+                    print("Password cannot be empty")
+                    SHpass_str = input("What is the Shiphero Password?\n")
+                else:
+                    break
+        else:
+            print("something else")
+print('\nLogged in')
+count = 0
+sleep = float(60 * minutes_float)
+RRCount=1
+try:
+
+    while count < end_count:
+        driver.refresh()
+        Noise = driver.find_element(By.CSS_SELECTOR,
+                                    "#your_products_processing")
+        WebDriverWait(driver, 20).until(
+            EC.invisibility_of_element_located(Noise))
+        time.sleep(.5)
+        Replenishment_txt = driver.find_element(By.CSS_SELECTOR,
+                                                "#your_products_info")
+        WebDriverWait(driver, 20).until(
+            EC.visibility_of(Replenishment_txt))
+        Replenishment_check = Replenishment_txt.text
+        Replenishment_key = 'Showing 0 to 0 of 0 entries'
+        if Replenishment_check == Replenishment_key:
+            print(f"{RRCount}\nRunning Report")
+
+            SKU_lst = ['None']
+
+            hour = datetime.datetime.now().strftime("%I:%M %p")
+
+            port = 465  # For SSL
+
+            # Create a secure SSL context
+            context = ssl.create_default_context()
+
+            with smtplib.SMTP_SSL("smtp.gmail.com", port,
+                                  context=context) as server:
+                server.login(<email>,
+                             <password>)
+                for y in receiveremails_lst:
+                    server.sendmail(<email>, y,
+                                    message.format(hour, ',\n'.join(SKU_lst))
+                                    )
+        else:
+            print(RRCount)
+            driver_func()
+            email_func()
+        count += 1
+        RRCount += 1
+        time.sleep(sleep)
+        # time.sleep(120)
+
+    while len(os.listdir(DPath_txt)) > 0:
+        for i in os.listdir(DPath_txt):
+            ipath = DPath_txt + "\\" + i
+            os.remove(ipath)
+    # os.rmdir(DPath_txt)
+except Exception as e:
+    print(type(e).__name__ + ": " + str(e))
+driver.close()
+print("Program is done")
+time.sleep(5)

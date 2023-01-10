@@ -10,7 +10,6 @@ print('What is the raw data filepath?\nMust be .csv. Must be the full filepath:'
       )
 file = input()
 file = file[1:-1]
-
 # What are you naming the export
 print('What are you naming the export?:')
 fname = input()
@@ -158,9 +157,8 @@ FreqCtryON_df = FreqCtryON_df.sort_values(by=['Count'], ascending=False)
 print('What should this be saved in?\nInclude full folderpath:')
 folder = input()
 folder = folder[1:-1]
-os.makedirs("{}\\Oracle".format(folder))
-os.makedirs("{}\\Oracle\\With Order Numbers".format(folder))
-os.makedirs("{}\\Oracle\\Country\\With Order Numbers".format(folder))
+os.makedirs("{}\\Oracle\\With Order Numbers".format(folder), exist_ok=True)
+os.makedirs("{}\\Oracle\\Country\\With Order Numbers".format(folder), exist_ok=True)
 while True:
     try:
         FreqAll_df.to_csv(

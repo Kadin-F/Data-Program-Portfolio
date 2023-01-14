@@ -1,0 +1,39 @@
+library(ggplot2)
+library(plyr)
+
+head(ToothGrowth)
+table(ToothGrowth$supp,ToothGrowth$dose)
+ToothGrowth
+vals=ddply(ToothGrowth,.(supp,dose),summarize,
+           M=mean(len),
+           n=length(len),
+           df=(n*2)-2,
+           s=sd(len),
+           se=s/sqrt(n),
+           cv=qt(.975,df),
+           ci=se*cv,
+           lower=M-ci,
+           upper=M+ci)
+vals
+
+pd=position_dodge(.9)
+bp=ggplot(vals,aes(x=supp,y=M,fill=as.factor(dose)))+
+  geom_bar(stat='identity',position=pd,col='darkgray')+
+  scale_fill_manual(name='Dose',values=c('darkgray','gray','white'))+
+  geom_errorbar(aes(ymin=lower,ymax=upper),width=.2,position=pd)+
+  xlab('Supplement Type')+
+  ylab('Mean Tooth Length')+
+  theme_bw()
+bp
+
+bp2=ggplot(vals,aes(x=as.factor(dose),y=M,fill=supp))+
+  geom_bar(stat='identity',position=pd,col='darkgray')+
+  scale_fill_manual(name='Supplement',values=c('darkgray','gray'))+
+  geom_errorbar(aes(ymin=lower,ymax=upper),width=.2,position=pd)+
+  xlab('Dose')+
+  ylab('Mean Tooth Length')+
+  theme_bw()
+bp2
+
+bp
+bp2

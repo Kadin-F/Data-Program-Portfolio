@@ -12,3 +12,11 @@ I created this program to combine multiple .csv files into one large file. Since
 Replenishment Report
 
 This program was created to automatically download a file from the inventory management service ShipHero's dashboard, clean the data, and send it in an email format. This file is nonfunctional without a valid username and password for ShipHero, the password for the sender email address has also been removed. This program was used to practice using the Selenium webdriver, and using smtplib as a gmail driver.
+
+Dungeons and Dragons NPC Generator R
+
+This program was written in R and used the shiny web app package for deployment. This application generates a random character description generator for use in Dungeons and Dragons.
+
+Twister R
+
+This r script creates a function that acts as the spinner in the game twister

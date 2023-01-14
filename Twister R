@@ -1,0 +1,45 @@
+twister=function(s=(sample(1:59096938,1))){
+  ss=sample(1:s,1)
+  set.seed(ss)
+  c=sample(1:4,1)
+  set.seed(s)
+  l=sample(1:4,1)
+  set.seed(s)
+  if(l==1){
+    ll='Left Foot'
+  }
+  
+  if(l==2){
+    ll='Left Hand'
+  }
+  
+  if(l==3){
+    ll='Right Foot'
+  }
+  
+  if(l==4){
+    ll='Right Hand'
+  }
+  
+  if(c==1){
+    cc='Red'
+  }
+  
+  if(c==2){
+    cc='Green'
+  }
+  
+  if(c==3){
+    cc='Blue'
+  }
+  
+  if(c==4){
+    cc='Yellow'
+  }
+  
+  t=c(ll,", ",cc)
+  TW=paste(t,collapse = "")
+  return(TW)
+}
+
+twister()

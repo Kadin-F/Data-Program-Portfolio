@@ -21,3 +21,6 @@ Twister R
 
 This r script creates a function that acts as the spinner in the game twister
 
+Bar Graph with Error Bars R
+
+This scripts was written as part of my Statistics and Visualizatons with R class. It is summarizing and visualizing the data in the toothgrowth dataset.

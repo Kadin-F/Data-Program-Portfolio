@@ -1,0 +1,500 @@
+library(shiny)
+
+
+ui <- pageWithSidebar(
+  headerPanel("NPC Generator"),
+  sidebarPanel(
+    
+    selectInput('gender',
+                "What is the gender of this NPC?",
+                c("I don't care"="GE",
+                  'Male'='M',
+                  'Female'='F')),
+    
+    selectInput('age',
+                "How old is this NPC?",
+                c("I don't care"="AGE",
+                  'They are an Adolescent'='A',
+                  'They are a Young Adult'='YA',
+                  'They are a Middle Aged Adult'='MA',
+                  'They are an Old Adult'='YA',
+                  'They are an Elder'='E')),
+    
+    selectInput('race',
+                "What is the race this NPC?",
+                c("I don't care"="RACE",
+                  'They are a Human'='H',
+                  'They are an Elf'='E',
+                  'They are a Half-elf'='HE',
+                  'They are a Dwarf'='D',
+                  'They are a Halfling'='HA',
+                  'They are a Dragonborn'='DB',
+                  'They are a Gnome'='G',
+                  'They are an Orc'='O',
+                  'They are a Tiefling'='T')),
+    
+    selectInput('size',
+                "What is the size of the City?",
+                c('City Sized'='C',
+                  'Town'='T')),
+    
+    actionButton("button", "ANOTHER!")
+    
+  ),
+  mainPanel(h3(textOutput("caption")))
+)
+server<- function(input,output){
+  NPC=function(gender=(sample(c("M","F"),1,prob = c(.4,.6))),age=sample(c('A','YA','MA','OA','E'),1),race=sample(c('H','E','HE','D','HA','DB','G','O','T'),1,prob = c(.20,.20,.10,.18,.14,.07,.05,.05,.01)),size='C'){
+    if(gender=="GE"){gender=(sample(c("M","F"),1,prob = c(.4,.6)))}
+    if(age=="AGE"){age=sample(c('A','YA','MA','OA','E'),1)}
+    if(race=="RACE"){race=sample(c('H','E','HE','D','HA','DB','G','O','T'),1,prob = c(.20,.20,.10,.18,.14,.07,.05,.05,.01))}
+    
+    
+    if(gender=="M"){sex='Male'
+    pros='Gentleman'}
+    if(gender=="F"){sex='Female'
+    pros='Lady'}
+    if(age=='A'){Age='Adolescent'}
+    if(age=='YA'){Age='Young Adult'}
+    if(age=='MA'){Age='Middle Aged'}
+    if(age=='OA'){Age='Old Adult'}
+    if(age=='E'){Age='Elderly'}
+    if(race=='H'){Race='Human'}
+    if(race=='E'){Race='Elf'}
+    if(race=='HE'){Race='Half-Elf'}
+    if(race=='D'){Race='Dwarf'}
+    if(race=='HA'){Race='Halfling'}
+    if(race=='DB'){Race='Dragonborn'}
+    if(race=='G'){Race='Gnome'}
+    if(race=='O'){Race='Orc'}
+    if(race=='T'){Race='Tiefling'}
+    
+    ##Occupation Logic Path
+    if(age=='E'){
+      if(size=='T'){Occ=sample(1:10,1,prob = c(.25,.10,.05,.05,.10,.07,.15,.06,.02,.15))}
+      if(size=='C'){Occ=sample(1:20,1,prob=c(.03,.10,.05,.05,.10,.03,.03,.03,.03,.05,.05,.10,.01,.02,.05,.03,.06,.10,.05,.03))}
+      if(Occ==1){oocc="A Farmer"}
+      if(Occ==2){oocc="A Merchant"}
+      if(Occ==3){oocc='A Barkeep'}
+      if(Occ==4){oocc='A Blacksmith'}
+      if(Occ==5){oocc='A Town Guard'}
+      if(Occ==6){oocc='A Woodworker'}
+      if(Occ==7){oocc='A Shepard'}
+      if(Occ==8){oocc='A Tailor'}
+      if(Occ==9){oocc='A Healer'}
+      if(Occ==10){oocc='A Baker'}
+      if(Occ==11){oocc='An Entertainer'}
+      if(Occ==12){oocc='A Bureaucrat'}
+      if(Occ==13){oocc='A Judge'}
+      if(Occ==14){oocc='An Executioner'}
+      if(Occ==15){oocc=c('A ',pros," of the Night")}
+      if(Occ==16){oocc='A Teacher'}
+      if(Occ==17){oocc='A Student'}
+      if(Occ==18){oocc='A Mercenary'}
+      if(Occ==19){oocc='A Begger'}
+      occupation=c('Retired, but used to be ',oocc)}
+    if(age!='E'){
+      if(size=='T'){Occ=sample(1:10,1,prob = c(.25,.10,.05,.05,.10,.07,.15,.06,.02,.15))}
+      if(size=='C'){Occ=sample(1:20,1,prob=c(.03,.10,.05,.05,.10,.03,.03,.03,.03,.05,.05,.10,.01,.02,.05,.03,.06,.10,.05,.03))}
+      if(Occ==1){occupation="A Farmer"}
+      if(Occ==2){occupation="A Merchant"}
+      if(Occ==3){occupation='A Barkeep'}
+      if(Occ==4){occupation='A Blacksmith'}
+      if(Occ==5){occupation='A Town Guard'}
+      if(Occ==6){occupation='A Woodworker'}
+      if(Occ==7){occupation='A Shepard'}
+      if(Occ==8){occupation='A Tailor'}
+      if(Occ==9){occupation='A Healer'}
+      if(Occ==10){occupation='A Baker'}
+      if(Occ==11){occupation='An Entertainer'}
+      if(Occ==12){occupation='A Bureaucrat'}
+      if(Occ==13){occupation='A Judge'}
+      if(Occ==14){occupation='An Executioner'}
+      if(Occ==15){occupation=c('A ',pros," of the Night")}
+      if(Occ==16){occupation='A Teacher'}
+      if(Occ==17){occupation='A Student'}
+      if(Occ==18){occupation='A Mercenary'}
+      if(Occ==19){occupation='A Begger'}
+      if(Occ==20){occ=sample(1:19,1,prob=c(.03,.10,.06,.05,.10,.03,.03,.03,.03,.05,.05,.10,.01,.02,.06,.03,.06,.10,.06))
+      if(occ==1){f="A Farmer"}
+      if(occ==2){f="A Merchant"}
+      if(occ==3){f='A Barkeep'}
+      if(occ==4){f='A Blacksmith'}
+      if(occ==5){f='A Town Guard'}
+      if(occ==6){f='A Woodworker'}
+      if(occ==7){f='A Shepard'}
+      if(occ==8){f='A Tailor'}
+      if(occ==9){f='A Healer'}
+      if(occ==10){f='A Baker'}
+      if(occ==11){f='A Musician'}
+      if(occ==12){f='A Bureaucrat'}
+      if(occ==13){f='A Judge'}
+      if(occ==14){f='An Executioner'}
+      if(occ==15){f=c('A ',pros," of the Night")}
+      if(occ==16){f='A Teacher'}
+      if(occ==17){f='A Student'}
+      if(occ==18){f='An Actor'}
+      if(occ==19){f='A Begger'}
+      occupation=c('A Theif who is disguised as ', f)}
+    }
+    
+    ##Height Logic Path
+    ht=sample(1:7,1,prob = c(.0201,.135,.68,.135,.0201,.0049,.0049))
+    if(ht==1){height=c("Very Short for a ", Race)}
+    if(ht==2){height=c("Short for a ", Race)}
+    if(ht==3){height=c("Average Height for a ", Race)}
+    if(ht==4){height=c("Tall for a ", Race)}
+    if(ht==5){height=c("Very Tall for a ",Race)}
+    if(ht==6){height=c("Embarassingly Short for a ",Race, ' and they are Embarassed by it')}
+    if(ht==7){height=c("Absolutely Gigantic for a ", Race)}
+    
+    ##Hair Logic Path
+    horb=sample(1:2,1,prob=c(.8,.2))
+    if(gender=="F" | horb==1){
+      hl=sample(1:7,1,prob =c(.15,.15,.15,.15,.15,.15,.1))
+      if(hl==1){hairlength="Shaved"}
+      if(hl==2){hairlength="Very Short"}
+      if(hl==3){hairlength="Short"}
+      if(hl==4){hairlength="Medium"}
+      if(hl==5){hairlength="long"}
+      if(hl==6){hairlength="Very Long"}
+      if(hl==7){hairlength="Floor Length"}
+      
+      hc=sample(1:10,1,prob = c(.12,.12,.12,.12,.12,.12,.07,.07,.07,.07))
+      if(hc==1){haircolor='Blonde'}
+      if(hc==2){haircolor='Black'}
+      if(hc==3){haircolor='Dark Brown'}
+      if(hc==4){haircolor='Brown'}
+      if(hc==5){haircolor='Light Brown'}
+      if(hc==6){haircolor='Natural Red'}
+      if(hc==7){haircolor='Dyed Red'}
+      if(hc==8){haircolor='Dyed Green'}
+      if(hc==9){haircolor='Dyed Blue'}
+      if(hc==10){haircolor='Dyed Purple'}
+      desc=c(hairlength,' ',haircolor," hair ")}
+    
+    if(gender=="M" & horb==2){
+      desc="They are bald"
+    }
+    
+    ##Eye Logic Path
+    eye=sample(1:7,1,prob = c(.22,.22,.22,.13,.07,.07,.07))
+    if(eye==1){eyecolor="Blue"}
+    if(eye==2){eyecolor='Green'}
+    if(eye==3){eyecolor='Brown'}
+    if(eye==4){eyecolor='Blue-Green Heterochromatic'}
+    if(eye==5){eyecolor='White'}
+    if(eye==6){eyecolor='Black'}
+    if(eye==7){eyecolor='Red'}
+    desc=c(desc,"with ",eyecolor," eyes.")
+    
+    ##Beard Logic Path
+    if(race=="D"){byn=1}
+    if(race=="E"|race=="DB"|race=="T"|race=="O"){byn=2}
+    if(race=="H"|race=="HE"|race=="HA"|race=="G"){byn=sample(1:2,1)}
+    if(gender=="M" & byn==1){
+      if(horb==2){
+        bl=sample(1:7,1,prob = c(.16,.16,.16,.16,.16,.16,.04))
+        if(bl==1){beardlength='Patchy'}
+        if(bl==2){beardlength='Short'}
+        if(bl==3){beardlength='Gotee Style'}
+        if(bl==4){beardlength='Medium Length'}
+        if(bl==5){beardlength='Long'}
+        if(bl==6){beardlength='Very long'}
+        if(bl==7){beardlength='Floor Length'}
+        
+        bc=sample(1:10,1,prob = c(.12,.12,.12,.12,.12,.12,.07,.07,.07,.07))
+        if(bc==1){beardcolor='Blonde'}
+        if(bc==2){beardcolor='Black'}
+        if(bc==3){beardcolor='Dark Brown'}
+        if(bc==4){beardcolor='Brown'}
+        if(bc==5){beardcolor='Light Brown'}
+        if(bc==6){beardcolor='Natural Red'}
+        if(bc==7){beardcolor='Dyed Red'}
+        if(bc==8){beardcolor='Dyed Green'}
+        if(bc==9){beardcolor='Dyed Blue'}
+        if(bc==10){beardcolor='Dyed Purple'}
+        desc=c(desc," and a ",beardlength, ' ',beardcolor," beard.")}
+      if(horb==1){
+        bl=sample(1:7,1,prob = c(.16,.16,.16,.16,.16,.16,.04))
+        if(bl==1){beardlength='Patchy'}
+        if(bl==2){beardlength='Short'}
+        if(bl==3){beardlength='Gotee Style'}
+        if(bl==4){beardlength='Medium Length'}
+        if(bl==5){beardlength='Long'}
+        if(bl==6){beardlength='Very long'}
+        if(bl==7){beardlength='Floor Length'}
+        
+        beardcolor=haircolor
+        
+        desc=c(desc," and a ",beardlength, ' ',beardcolor," beard.")
+      }
+    }
+    ##Nose Shape Logic
+    ns=sample(1:6,1)
+    if(ns==1){noseshape="Bulbous"}
+    if(ns==2){noseshape="Thin"}
+    if(ns==3){noseshape="Round"}
+    if(ns==4){noseshape="Hooked"}
+    if(ns==5){noseshape="Crooked"}
+    if(ns==6){noseshape="Long"}
+    desc=c(noseshape," Nose. They have ",desc)
+    
+    ##Face Shape Logic Path
+    fs=sample(1:5,1)
+    if(fs==1){faceshape="Short Squashed"}
+    if(fs==2){faceshape="Long Thin"}
+    if(fs==3){faceshape="Round"}
+    if(fs==4){faceshape="Pointy"}
+    if(fs==5){faceshape="Heart Shaped"}
+    desc=c("They have a ",faceshape, " face with a ", desc)
+    
+    ##Body Type
+    bt=sample(1:5,1,prob =c(.2475,.2475,.2475,.2475,.01) )
+    if(bt==1){bodytype="Fat"}
+    if(bt==2){bodytype="Thin"}
+    if(bt==3){bodytype="Lanky"}
+    if(bt==4){bodytype="Stocky"}
+    if(bt==5){bodytype="Squash Shaped"}
+    
+    o=c("A ", Age," ",sex," ",Race," ","who is ",occupation,". They are ",height, " and ",bodytype,'. ', desc)
+    O=paste(o,collapse = "")
+    return(O)
+  }
+  
+  formulaText <- reactive({
+    paste(list(NPC(gender = input$gender,age = input$age,race = input$race,size = input$size)))
+  })
+  
+  output$caption <- renderText({
+    formulaText()
+  })
+  
+  observeEvent(input$button,{NPC=function(gender=(sample(c("M","F"),1,prob = c(.4,.6))),age=sample(c('A','YA','MA','OA','E'),1),race=sample(c('H','E','HE','D','HA','DB','G','O','T'),1,prob = c(.20,.20,.10,.18,.14,.07,.05,.05,.01)),size='C'){
+    if(gender=="GE"){gender=(sample(c("M","F"),1,prob = c(.4,.6)))}
+    if(age=="AGE"){age=sample(c('A','YA','MA','OA','E'),1)}
+    if(race=="RACE"){race=sample(c('H','E','HE','D','HA','DB','G','O','T'),1,prob = c(.20,.20,.10,.18,.14,.07,.05,.05,.01))}
+    
+    
+    if(gender=="M"){sex='Male'
+    pros='Gentleman'}
+    if(gender=="F"){sex='Female'
+    pros='Lady'}
+    if(age=='A'){Age='Adolescent'}
+    if(age=='YA'){Age='Young Adult'}
+    if(age=='MA'){Age='Middle Aged'}
+    if(age=='OA'){Age='Old Adult'}
+    if(age=='E'){Age='Elderly'}
+    if(race=='H'){Race='Human'}
+    if(race=='E'){Race='Elf'}
+    if(race=='HE'){Race='Half-Elf'}
+    if(race=='D'){Race='Dwarf'}
+    if(race=='HA'){Race='Halfling'}
+    if(race=='DB'){Race='Dragonborn'}
+    if(race=='G'){Race='Gnome'}
+    if(race=='O'){Race='Orc'}
+    if(race=='T'){Race='Tiefling'}
+    
+    ##Occupation Logic Path
+    if(age=='E'){
+      if(size=='T'){Occ=sample(1:10,1,prob = c(.25,.10,.05,.05,.10,.07,.15,.06,.02,.15))}
+      if(size=='C'){Occ=sample(1:20,1,prob=c(.03,.10,.05,.05,.10,.03,.03,.03,.03,.05,.05,.10,.01,.02,.05,.03,.06,.10,.05,.03))}
+      if(Occ==1){oocc="A Farmer"}
+      if(Occ==2){oocc="A Merchant"}
+      if(Occ==3){oocc='A Barkeep'}
+      if(Occ==4){oocc='A Blacksmith'}
+      if(Occ==5){oocc='A Town Guard'}
+      if(Occ==6){oocc='A Woodworker'}
+      if(Occ==7){oocc='A Shepard'}
+      if(Occ==8){oocc='A Tailor'}
+      if(Occ==9){oocc='A Healer'}
+      if(Occ==10){oocc='A Baker'}
+      if(Occ==11){oocc='An Entertainer'}
+      if(Occ==12){oocc='A Bureaucrat'}
+      if(Occ==13){oocc='A Judge'}
+      if(Occ==14){oocc='An Executioner'}
+      if(Occ==15){oocc=c('A ',pros," of the Night")}
+      if(Occ==16){oocc='A Teacher'}
+      if(Occ==17){oocc='A Student'}
+      if(Occ==18){oocc='A Mercenary'}
+      if(Occ==19){oocc='A Begger'}
+      occupation=c('Retired, but used to be ',oocc)}
+    if(age!='E'){
+      if(size=='T'){Occ=sample(1:10,1,prob = c(.25,.10,.05,.05,.10,.07,.15,.06,.02,.15))}
+      if(size=='C'){Occ=sample(1:20,1,prob=c(.03,.10,.05,.05,.10,.03,.03,.03,.03,.05,.05,.10,.01,.02,.05,.03,.06,.10,.05,.03))}
+      if(Occ==1){occupation="A Farmer"}
+      if(Occ==2){occupation="A Merchant"}
+      if(Occ==3){occupation='A Barkeep'}
+      if(Occ==4){occupation='A Blacksmith'}
+      if(Occ==5){occupation='A Town Guard'}
+      if(Occ==6){occupation='A Woodworker'}
+      if(Occ==7){occupation='A Shepard'}
+      if(Occ==8){occupation='A Tailor'}
+      if(Occ==9){occupation='A Healer'}
+      if(Occ==10){occupation='A Baker'}
+      if(Occ==11){occupation='An Entertainer'}
+      if(Occ==12){occupation='A Bureaucrat'}
+      if(Occ==13){occupation='A Judge'}
+      if(Occ==14){occupation='An Executioner'}
+      if(Occ==15){occupation=c('A ',pros," of the Night")}
+      if(Occ==16){occupation='A Teacher'}
+      if(Occ==17){occupation='A Student'}
+      if(Occ==18){occupation='A Mercenary'}
+      if(Occ==19){occupation='A Begger'}
+      if(Occ==20){occ=sample(1:19,1,prob=c(.03,.10,.06,.05,.10,.03,.03,.03,.03,.05,.05,.10,.01,.02,.06,.03,.06,.10,.06))
+      if(occ==1){f="A Farmer"}
+      if(occ==2){f="A Merchant"}
+      if(occ==3){f='A Barkeep'}
+      if(occ==4){f='A Blacksmith'}
+      if(occ==5){f='A Town Guard'}
+      if(occ==6){f='A Woodworker'}
+      if(occ==7){f='A Shepard'}
+      if(occ==8){f='A Tailor'}
+      if(occ==9){f='A Healer'}
+      if(occ==10){f='A Baker'}
+      if(occ==11){f='A Musician'}
+      if(occ==12){f='A Bureaucrat'}
+      if(occ==13){f='A Judge'}
+      if(occ==14){f='An Executioner'}
+      if(occ==15){f=c('A ',pros," of the Night")}
+      if(occ==16){f='A Teacher'}
+      if(occ==17){f='A Student'}
+      if(occ==18){f='An Actor'}
+      if(occ==19){f='A Begger'}
+      occupation=c('A Theif who is disguised as ', f)}
+    }
+    
+    ##Height Logic Path
+    ht=sample(1:7,1,prob = c(.0201,.135,.68,.135,.0201,.0049,.0049))
+    if(ht==1){height=c("Very Short for a ", Race)}
+    if(ht==2){height=c("Short for a ", Race)}
+    if(ht==3){height=c("Average Height for a ", Race)}
+    if(ht==4){height=c("Tall for a ", Race)}
+    if(ht==5){height=c("Very Tall for a ",Race)}
+    if(ht==6){height=c("Embarassingly Short for a ",Race, ' and they are Embarassed by it')}
+    if(ht==7){height=c("Absolutely Gigantic for a ", Race)}
+    
+    ##Hair Logic Path
+    horb=sample(1:2,1,prob=c(.8,.2))
+    if(gender=="F" | horb==1){
+      hl=sample(1:7,1,prob =c(.15,.15,.15,.15,.15,.15,.1))
+      if(hl==1){hairlength="Shaved"}
+      if(hl==2){hairlength="Very Short"}
+      if(hl==3){hairlength="Short"}
+      if(hl==4){hairlength="Medium"}
+      if(hl==5){hairlength="long"}
+      if(hl==6){hairlength="Very Long"}
+      if(hl==7){hairlength="Floor Length"}
+      
+      hc=sample(1:10,1,prob = c(.12,.12,.12,.12,.12,.12,.07,.07,.07,.07))
+      if(hc==1){haircolor='Blonde'}
+      if(hc==2){haircolor='Black'}
+      if(hc==3){haircolor='Dark Brown'}
+      if(hc==4){haircolor='Brown'}
+      if(hc==5){haircolor='Light Brown'}
+      if(hc==6){haircolor='Natural Red'}
+      if(hc==7){haircolor='Dyed Red'}
+      if(hc==8){haircolor='Dyed Green'}
+      if(hc==9){haircolor='Dyed Blue'}
+      if(hc==10){haircolor='Dyed Purple'}
+      desc=c(hairlength,' ',haircolor," hair ")}
+    
+    if(gender=="M" & horb==2){
+      desc="They are bald"
+    }
+    
+    ##Eye Logic Path
+    eye=sample(1:7,1,prob = c(.22,.22,.22,.13,.07,.07,.07))
+    if(eye==1){eyecolor="Blue"}
+    if(eye==2){eyecolor='Green'}
+    if(eye==3){eyecolor='Brown'}
+    if(eye==4){eyecolor='Blue-Green Heterochromatic'}
+    if(eye==5){eyecolor='White'}
+    if(eye==6){eyecolor='Black'}
+    if(eye==7){eyecolor='Red'}
+    desc=c(desc,"with ",eyecolor," eyes.")
+    
+    ##Beard Logic Path
+    if(race=="D"){byn=1}
+    if(race=="E"|race=="DB"|race=="T"|race=="O"){byn=2}
+    if(race=="H"|race=="HE"|race=="HA"|race=="G"){byn=sample(1:2,1)}
+    if(gender=="M" & byn==1){
+      if(horb==2){
+        bl=sample(1:7,1,prob = c(.16,.16,.16,.16,.16,.16,.04))
+        if(bl==1){beardlength='Patchy'}
+        if(bl==2){beardlength='Short'}
+        if(bl==3){beardlength='Gotee Style'}
+        if(bl==4){beardlength='Medium Length'}
+        if(bl==5){beardlength='Long'}
+        if(bl==6){beardlength='Very long'}
+        if(bl==7){beardlength='Floor Length'}
+        
+        bc=sample(1:10,1,prob = c(.12,.12,.12,.12,.12,.12,.07,.07,.07,.07))
+        if(bc==1){beardcolor='Blonde'}
+        if(bc==2){beardcolor='Black'}
+        if(bc==3){beardcolor='Dark Brown'}
+        if(bc==4){beardcolor='Brown'}
+        if(bc==5){beardcolor='Light Brown'}
+        if(bc==6){beardcolor='Natural Red'}
+        if(bc==7){beardcolor='Dyed Red'}
+        if(bc==8){beardcolor='Dyed Green'}
+        if(bc==9){beardcolor='Dyed Blue'}
+        if(bc==10){beardcolor='Dyed Purple'}
+        desc=c(desc," and a ",beardlength, ' ',beardcolor," beard.")}
+      if(horb==1){
+        bl=sample(1:7,1,prob = c(.16,.16,.16,.16,.16,.16,.04))
+        if(bl==1){beardlength='Patchy'}
+        if(bl==2){beardlength='Short'}
+        if(bl==3){beardlength='Gotee Style'}
+        if(bl==4){beardlength='Medium Length'}
+        if(bl==5){beardlength='Long'}
+        if(bl==6){beardlength='Very long'}
+        if(bl==7){beardlength='Floor Length'}
+        
+        beardcolor=haircolor
+        
+        desc=c(desc," and a ",beardlength, ' ',beardcolor," beard.")
+      }
+    }
+    ##Nose Shape Logic
+    ns=sample(1:6,1)
+    if(ns==1){noseshape="Bulbous"}
+    if(ns==2){noseshape="Thin"}
+    if(ns==3){noseshape="Round"}
+    if(ns==4){noseshape="Hooked"}
+    if(ns==5){noseshape="Crooked"}
+    if(ns==6){noseshape="Long"}
+    desc=c(noseshape," Nose. They have ",desc)
+    
+    ##Face Shape Logic Path
+    fs=sample(1:5,1)
+    if(fs==1){faceshape="Short Squashed"}
+    if(fs==2){faceshape="Long Thin"}
+    if(fs==3){faceshape="Round"}
+    if(fs==4){faceshape="Pointy"}
+    if(fs==5){faceshape="Heart Shaped"}
+    desc=c("They have a ",faceshape, " face with a ", desc)
+    
+    ##Body Type
+    bt=sample(1:5,1,prob =c(.2475,.2475,.2475,.2475,.01) )
+    if(bt==1){bodytype="Fat"}
+    if(bt==2){bodytype="Thin"}
+    if(bt==3){bodytype="Lanky"}
+    if(bt==4){bodytype="Stocky"}
+    if(bt==5){bodytype="Squash Shaped"}
+    
+    o=c("A ", Age," ",sex," ",Race," ","who is ",occupation,". They are ",height, " and ",bodytype,'. ', desc)
+    O=paste(o,collapse = "")
+    return(O)
+  }
+  
+  formulaText <- reactive({
+    paste(list(NPC(gender = input$gender,age = input$age,race = input$race,size = input$size)))
+  })
+  
+  output$caption <- renderText({
+    formulaText()
+  })})
+}
+
+shinyApp(ui, server)
